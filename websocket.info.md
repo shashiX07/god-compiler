@@ -1,89 +1,143 @@
-# God Compiler WebSocket API Guide
+# 🚀 God Compiler WebSocket API Guide
 
-## Connection Details
-
-* **URL:** `ws://localhost:3000`
-* **Protocol:** Standard WebSocket
-* **Transport:** JSON messages
+The God Compiler WebSocket API provides real-time code execution with interactive stdin support, live stdout/stderr streaming, and manual process control.
 
 ---
 
-# Message Format
+# 1. Connection & Protocol
 
-All communication uses JSON objects with an `event` field.
+## WebSocket URL
+
+```text id="zrmzfq"
+ws://localhost:3000
+```
 
 ---
 
-# Client → Server
+## Communication Format
 
-## Execute Code
+All messages must be JSON-stringified objects.
 
-```json
+---
+
+## Heartbeat
+
+Connection health is maintained using the standard WebSocket ping/pong mechanism.
+
+---
+
+# 2. Execution Lifecycle
+
+---
+
+# Step A — Execute Code
+
+Starts a new execution session.
+
+## Client Request
+
+```json id="qvh9vd"
 {
   "event": "execute",
   "language": "cpp",
-  "code": "#include <iostream>\nint main() { return 0; }"
+  "code": "#include <iostream>\nint main() { int x; std::cin >> x; std::cout << x * 2; return 0; }"
 }
 ```
 
-### Fields
-
-| Field      | Type   | Description          |
-| ---------- | ------ | -------------------- |
-| `event`    | string | Must be `"execute"`  |
-| `language` | string | Programming language |
-| `code`     | string | Source code          |
-
 ---
 
-# Server → Client Events
+## Server Response
 
-| Event    | Description              |
-| -------- | ------------------------ |
-| `status` | Execution status updates |
-| `stdout` | Standard output          |
-| `stderr` | Error output             |
-| `exit`   | Final execution result   |
-| `error`  | Internal/server errors   |
+The server immediately returns a unique `jobId`.
 
----
+This `jobId` is required for:
 
-# Successful Execution
+* stdin interaction
+* manual termination
+* process tracking
 
-## Request
-
-```json
+```json id="szgg0k"
 {
-  "event": "execute",
-  "language": "cpp",
-  "code": "#include <iostream>\nint main() { std::cout << \"Hello Shashi\"; return 0; }"
+  "event": "started",
+  "jobId": "8f153111-208c-4354-99af-2f202369b61a"
 }
 ```
 
-## Response Stream
+---
 
-```json
+# Step B — Send stdin Input
+
+Allows clients to send input to a running process.
+
+> Always include `\n` to simulate pressing the Enter key.
+
+---
+
+## Client Request
+
+```json id="y49z7e"
+{
+  "event": "stdin",
+  "jobId": "8f153111-208c-4354-99af-2f202369b61a",
+  "data": "5\n"
+}
+```
+
+---
+
+# Step C — Receive Server Events
+
+The server streams execution updates in real time.
+
+| Event    | Description                         |
+| -------- | ----------------------------------- |
+| `status` | Execution phase updates             |
+| `stdout` | Real-time standard output           |
+| `stderr` | Runtime errors or compiler warnings |
+| `exit`   | Final execution result              |
+
+---
+
+# 3. Event Examples
+
+---
+
+## Status Event
+
+```json id="w0a0s5"
 {
   "event": "status",
   "data": "Compiling..."
 }
 ```
 
-```json
-{
-  "event": "status",
-  "data": "Compilation completed. Executing..."
-}
-```
+---
 
-```json
+## stdout Event
+
+```json id="9zttki"
 {
   "event": "stdout",
-  "data": "Hello Shashi"
+  "data": "10"
 }
 ```
 
-```json
+---
+
+## stderr Event
+
+```json id="v1k81l"
+{
+  "event": "stderr",
+  "data": "Segmentation fault"
+}
+```
+
+---
+
+## exit Event
+
+```json id="i8v8c7"
 {
   "event": "exit",
   "exitCode": 0
@@ -92,28 +146,17 @@ All communication uses JSON objects with an `event` field.
 
 ---
 
-# Compilation Failure
+# 4. Failure Scenarios & Edge Cases
 
-## Request
+---
 
-```json
-{
-  "event": "execute",
-  "language": "cpp",
-  "code": "int main() { std::cout << \"Broken\" }"
-}
-```
+# ❌ Compilation Failure
 
-## Response
+If source code contains syntax errors, execution never starts.
 
-```json
-{
-  "event": "status",
-  "data": "Compiling..."
-}
-```
+## Event
 
-```json
+```json id="g9gflw"
 {
   "event": "exit",
   "data": {
@@ -126,114 +169,139 @@ All communication uses JSON objects with an `event` field.
 
 ---
 
-# Execution Timeout
+# ❌ Execution Timeout
 
-## Request
+If execution exceeds the configured runtime limit, the server forcefully terminates the process group using `SIGKILL`.
 
-```json
+## Events
+
+* `error`
+* `exit`
+
+## Example
+
+```json id="2y1gq9"
 {
-  "event": "execute",
-  "language": "cpp",
-  "code": "int main() { while(true); }"
+  "event": "error",
+  "data": "Execution timeout"
 }
 ```
 
-## Response
+---
 
-```json
+# ❌ Output Limit Exceeded
+
+If stdout exceeds `1MB`, execution is terminated automatically.
+
+## Event
+
+```json id="z32mva"
 {
   "event": "exit",
   "data": {
     "success": false,
-    "timeout": true,
-    "message": "Execution Timeout: Process killed..."
+    "message": "Execution terminated: Output limit exceeded"
   }
 }
 ```
 
 ---
 
-# Output Limit Protection
+# ❌ Invalid Job ID
 
-## Request
+Occurs when stdin is sent to a non-existent or completed process.
 
-```json
+## Event
+
+```json id="0g8s70"
 {
-  "event": "execute",
-  "language": "cpp",
-  "code": "#include <iostream>\nint main() { while(true) std::cout << \"SPAM\"; }"
-}
-```
-
-## Behavior
-
-* Process is terminated when output exceeds `1MB`
-* Connection remains alive
-* Server emits an `exit` event with an error message
-
----
-
-# System Constraints
-
-## Concurrency
-
-Maximum concurrent executions:
-
-```text
-3
-```
-
-If the server is busy:
-
-```json
-{
-  "success": false,
-  "message": "Server is busy. You are in the queue. Please wait for your turn."
+  "event": "error",
+  "data": "No active process found for the given job ID"
 }
 ```
 
 ---
 
-# Time Limits
+# 5. Manual Process Termination
 
-| Phase       | Limit |
-| ----------- | ----- |
-| Compilation | 10s   |
-| Execution   | 5s    |
+Clients can manually terminate running processes.
 
-Configured via:
+Useful for:
 
-```text
-EXECUTION_CONSTANTS
+* Stop buttons
+* Cancelling long-running jobs
+* Resetting execution sessions
+
+---
+
+## Client Request
+
+```json id="ywffxk"
+{
+  "event": "terminate",
+  "jobId": "8f153111-208c-4354-99af-2f202369b61a"
+}
 ```
 
 ---
 
-# Implementation Notes
+# 🛡️ System Constraints
 
-## Socket Registry
+| Metric              | Limit           |
+| ------------------- | --------------- |
+| Concurrency         | 3 Parallel Jobs |
+| Compilation Timeout | 10 Seconds      |
+| Execution Timeout   | 5 Seconds       |
+| Output Buffer Limit | 1MB             |
 
-Each connection receives a unique `socketID`.
+---
 
-Managed internally using:
+# 💡 Implementation Notes
 
-```text
-SocketRegistry
+---
+
+## Process Isolation
+
+Each execution runs inside a unique UUID-based workspace directory.
+
+---
+
+## Group Process Termination
+
+Processes are spawned using:
+
+```text id="5uqp5f"
+detached: true
 ```
 
----
+This allows the server to terminate:
 
-## Cleanup
+* the main process
+* all child processes
+* spawned subprocess trees
 
-Temporary workspaces are automatically deleted after execution:
-
-* Success
-* Compilation failure
-* Runtime failure
-* Timeout
+using a single `SIGKILL`.
 
 ---
 
-# Security
+## Automatic Cleanup
 
-The system uses `SIGKILL` to terminate runaway processes immediately.
+If a WebSocket connection closes unexpectedly:
+
+* running processes are terminated
+* temporary workspaces are deleted
+* allocated resources are released automatically
+
+---
+
+# 📡 Typical Client Workflow
+
+```text id="eym7z7"
+1. Connect to WebSocket server
+2. Send execute event
+3. Receive started event with jobId
+4. Stream stdout/stderr events
+5. Send stdin events if required
+6. Receive final exit event
+7. Optionally terminate manually
+```

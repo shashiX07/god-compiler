@@ -1,35 +1,54 @@
-import { v4 as uuidv4 } from 'uuid';
-import { socketRegistry } from './socket.registry.js';
-import { LiveExecutionManager } from '../execution/manager/live.execution.manager.js';
- 
+import { v4 as uuid } from "uuid";
+
+import { LiveExecutionManager } from "../execution/manager/live.execution.manager.js";
+
+import { handleStdin } from "./stdin.handler.js";
+
+import { terminateExecution } from "./terminate.handler.js";
+
 export const terminalGateway = (socket) => {
-    const socketID = uuidv4();
-    socketRegistry.add(socketID, socket);
-    socket.on("message", async (rawMessage) => {
-        try {
-            const message = rawMessage.toString();
-            const parsed = JSON.parse(message);
-            if (parsed.event === "execute") {
-                const { language, code } = parsed;
-                if (language !== 'cpp') {
-                    socket.send(JSON.stringify({
-                        event: "error",
-                        data: "Unsupported language only cpp is supported"
-                    }))
-                    return;
-                }
-                await LiveExecutionManager.executeCpp(code, socket);
-            }
-        } catch (error) {
-            console.error("Error in terminal gateway:", error);
-            socket.send(JSON.stringify({
-                event: "error",
-                data: "Internal Server Error"
-            }));
+  socket.on("message", async (message) => {
+    try {
+      const parsed = JSON.parse(message);
+
+      switch (parsed.event) {
+        case "execute": {
+          const jobId = uuid();
+
+          socket.send(
+            JSON.stringify({
+              event: "started",
+              jobId,
+            }),
+          );
+
+          await LiveExecutionManager.executeCpp(jobId, parsed.code, socket);
+
+          break;
         }
-    });
+
+        case "stdin": {
+          handleStdin(parsed.data, parsed.jobId, socket);
+
+          break;
+        }
+
+        case "terminate": {
+          terminateExecution(parsed.jobId, socket);
+
+          break;
+        }
+      }
+    } catch {
+      socket.send(
+        JSON.stringify({
+          event: "error",
+          data: "Internal server error",
+        }),
+      );
+    }
+  });
 
     socket.on("close", () => {
-        socketRegistry.remove(socketID);
-    })
-}
+    });
+};

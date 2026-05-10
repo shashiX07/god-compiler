@@ -2,12 +2,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { WorkspaceManager } from '../workspace/workspace.manager.js';
 import { CleanupManager } from '../workspace/cleanup.manager.js';
-import { streamRunner } from '../runner/stream.runner.js';
 import { EXECUTION_CONSTANTS } from '../../constants/execution.constants.js';
 import { compileCpp } from '../compiler/compile.cpp.js';
+import { interactiveRunner } from '../runner/interactive.runner.js';
 
 export class LiveExecutionManager {
-    static async executeCpp(code, socket) {
+    static async executeCpp(jobId, code, socket) {
         const { workspacePath } = await WorkspaceManager.createWorkspace();
         
         try {
@@ -59,7 +59,7 @@ export class LiveExecutionManager {
                 data: 'Compilation completed. Executing...'
             }));
 
-            await streamRunner(`./${outputFile}`, workspacePath, socket);
+            await interactiveRunner(jobId, `./${outputFile}`, workspacePath, socket);
 
         } catch (globalError) {
             console.error("Live Execution Manager Error:", globalError);

@@ -1,5 +1,5 @@
-const MAX_CONCURRENT_EXECUTIONS = 3;
-
+import { EXECUTION_CONSTANTS } from "../../constants/execution.constants.js";
+const MAX_CONCURRENT_EXECUTIONS = EXECUTION_CONSTANTS.MAX_CONCURRENT_EXECUTIONS;
 class ConcurrencyGuard {
     constructor() {
         this.activeExecutions = 0;
