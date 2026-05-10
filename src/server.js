@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { initilizeWebSocker } from './websocket/socket.server.js';
 import { startExecutionWatchdog } from './security/execution.watchdog.js';
 import { startQueueWorker } from './execution/queue/queue.worker.js';
+import "./execution/runtime/register.runtimes.js";
 
 
 const server = http.createServer(app);

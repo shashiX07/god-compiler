@@ -18,6 +18,10 @@ class SocketJobRegistry {
   remove(socketId) {
     this.registry.delete(socketId);
   }
+
+  removeSocket(socketId) {
+    this.remove(socketId);
+  }
 }
 
 export const socketJobRegistry = new SocketJobRegistry();

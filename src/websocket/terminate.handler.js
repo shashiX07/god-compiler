@@ -10,13 +10,19 @@ export const terminateExecution = (jobId, socket) => {
         return;
     }
     try {
-        process.kill(-processData.process.pid, 'SIGKILL');
+        if (process.platform === 'win32') {
+            processData.process.kill('SIGKILL');
+        } else {
+            process.kill(-processData.process.pid, 'SIGKILL');
+        }
         socket.send(JSON.stringify({
             event: "terminated",
             data: "Process terminated successfully"
         }));
     } catch (error) {
-        console.error("Error terminating process:", error);
+        if (error?.code !== 'ESRCH') {
+            console.error("Error terminating process:", error);
+        }
         socket.send(JSON.stringify({
             event: "error",
             data: "Failed to terminate the process"

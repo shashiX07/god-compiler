@@ -16,8 +16,8 @@ export class CppExecutor {
         await fs.writeFile(sourcePath, code);
 
         const compileResult = await compileCpp(sourceFile, outputFile, workspacePath);
-        
-        if (!compileResult) {
+
+        if (compileResult?.success === false) {
             return {
                 success: false,
                 phase: 'compilation',

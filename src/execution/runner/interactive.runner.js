@@ -4,10 +4,15 @@ import { processRegistry } from '../manager/process.registry.js';
 import { OutputMonitor } from '../../security/output.monitor.js';
 
 
+const sendSocketEvent = (socket, payload) => {
+    if (socket && socket.readyState === socket.OPEN) {
+        socket.send(JSON.stringify(payload));
+    }
+};
 
-export const interactiveRunner = (jobId, executablePath, cwd, socket) => {
+export const interactiveRunner = (jobId, executablePath, cwd, socket, args = []) => {
     return new Promise((resolve, reject) => {
-        const childProcess = spawn(executablePath, [], { cwd, detached: true });
+        const childProcess = spawn(executablePath, args, { cwd, detached: true });
         const outputMonitor = new OutputMonitor(childProcess);
         processRegistry.add(jobId, {process: childProcess, socket});
 
@@ -24,18 +29,18 @@ export const interactiveRunner = (jobId, executablePath, cwd, socket) => {
 
         childProcess.stdout.on("data", (data) => {
             outputMonitor.track(data);
-            socket.send(JSON.stringify({
+            sendSocketEvent(socket, {
                 event: 'stdout',
                 data: data.toString()
-            }));
+            });
         });
 
         childProcess.stderr.on("data", (data) => {
             outputMonitor.track(data);
-            socket.send(JSON.stringify({
+            sendSocketEvent(socket, {
                 event: "stderr",
                 data: data.toString()
-            }));
+            });
         })
 
         childProcess.on("close", (code) => {
@@ -43,21 +48,27 @@ export const interactiveRunner = (jobId, executablePath, cwd, socket) => {
             processRegistry.remove(jobId);
 
             if (timeoutTriggered) {
-                socket.send(JSON.stringify({
+                sendSocketEvent(socket, {
                     event: "exit",
                     data: "Execution Timeout: Process killed after exceeding time limit",
                     timeout: true,
                     exitCode: null
-                }));
+                });
                 return resolve();
             }
-            socket.send(JSON.stringify({
+            sendSocketEvent(socket, {
                 event: "exit",
                 data: "Process exited with code " + code,
                 exitCode: code
-            }));
+            });
 
             resolve();
+        });
+
+        childProcess.on("error", (error) => {
+            clearTimeout(timeout);
+            processRegistry.remove(jobId);
+            reject(error);
         });
 
     });

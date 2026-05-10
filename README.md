@@ -1,29 +1,72 @@
 # 🚀 God Compiler
 
-God Compiler is a high-performance, secure, and real-time code execution engine built with Node.js and Docker. It provides both REST-based execution and live-streaming WebSocket execution for compiling and running C++ programs in isolated environments.
+God Compiler is a high-performance, secure, and real-time code execution engine built with Node.js and Docker. It provides both REST and WebSocket execution interfaces for running code inside isolated, resource-constrained environments.
 
 ---
 
 # ✨ Features
 
-* Dual execution modes:
+## Dual Execution Modes
 
-  * REST API for standard request-response execution
-  * WebSocket API for real-time streaming execution
+### REST API
 
-* Real-time stdout and stderr streaming
+Stateless request-response execution model designed for batch jobs and one-off executions.
 
-* Secure isolated execution workspaces
+### WebSocket API
 
-* Automatic workspace cleanup after execution
+Stateful interactive execution model with real-time streaming and stdin support.
 
-* Output protection with a 1MB output limit
+---
 
-* Execution and compilation timeout protection
+## Interactive Terminal Support
 
-* Global concurrency control for server stability
+- Full bidirectional stdin support
+- Real-time user input handling
+- Interactive terminal-like execution sessions
 
-* Fully Dockerized environment
+---
+
+## Persistent Execution Sessions
+
+- Socket-to-process mapping
+- Long-running interactive session management
+- Job-based execution tracking using `jobId`
+
+---
+
+## Real-Time Streaming
+
+- Live stdout streaming
+- Live stderr streaming
+- Instant execution feedback
+
+---
+
+## Secure Isolation
+
+- UUID-based isolated workspaces
+- Automatic temporary workspace cleanup
+- Process-group level termination
+
+---
+
+## Resource Protection
+
+- Output buffer limit: `1MB`
+- Execution timeout: `5 seconds`
+- Compilation timeout: `10 seconds`
+
+---
+
+## Concurrency Control
+
+Built-in concurrency guard to maintain stability under heavy load.
+
+---
+
+## Manual Process Termination
+
+Supports killing running executions manually using a `jobId`.
 
 ---
 
@@ -42,26 +85,28 @@ God Compiler is a high-performance, secure, and real-time code execution engine 
 
 # 🚀 Quick Start
 
-## 1. Prerequisites
+---
 
-Install the following:
+# 1. Prerequisites
 
-* Docker
-* Docker Desktop
+Install the following dependencies:
+
+- Docker
+- Docker Desktop
 
 ---
 
-## 2. Build Docker Image
+# 2. Build Docker Image
 
-```bash id="t9q4v1"
+```bash id="3yzdfg"
 docker build -t god-compiler .
 ```
 
 ---
 
-## 3. Run the Container
+# 3. Run Docker Container
 
-```bash id="n2j4x0"
+```bash id="4jx69u"
 docker run -p 3000:3000 -v $(pwd):/app god-compiler
 ```
 
@@ -69,37 +114,45 @@ docker run -p 3000:3000 -v $(pwd):/app god-compiler
 
 # 📖 API Documentation
 
-The project provides two execution interfaces.
-
-## REST API
-
-Traditional request-response execution model.
-
-Suitable for:
-
-* Batch execution
-* One-off execution requests
-* Backend integrations
-
-- for more ino read : [RESTAPI Info](./rest.info.md)
 ---
 
-## WebSocket API
+# REST API
 
-Real-time streaming execution model.
+Traditional blocking execution model.
 
-Suitable for:
+Best suited for:
 
-* Online IDEs
-* Terminal-like experiences
-* Interactive execution environments
+- Batch execution
+- Script execution
+- Backend integrations
 
-- for more info read : [Websocket Info](./websocket.info.md)
+## Documentation
+
+```md id="w70q2y"
+[REST API Info](./rest.info.md)
+```
+
+---
+
+# WebSocket API
+
+Interactive stateful execution model.
+
+Best suited for:
+
+- Online IDEs
+- Remote shells
+- Interactive execution sessions
+
+## Documentation
+
+```md id="39enls"
+[WebSocket Info](./websocket.info.md)
+```
+
 ---
 
 # 🛡️ Security & Constraints
-
-The execution engine enforces multiple safety mechanisms.
 
 | Constraint          | Limit      |
 | ------------------- | ---------- |
@@ -110,55 +163,54 @@ The execution engine enforces multiple safety mechanisms.
 
 ---
 
-# 🔒 Isolation Model
+# 🔒 Isolation & Interactive Execution Model
 
-Each execution request:
+---
 
-1. Creates a unique UUID-based workspace
-2. Compiles and executes inside the isolated workspace
-3. Streams output safely
-4. Terminates runaway processes using `SIGKILL`
-5. Automatically deletes all temporary files
+## Workspace Isolation
+
+Every execution request creates a unique UUID-based workspace directory.
+
+---
+
+## Persistent Session Registry
+
+Interactive jobs are stored inside a Process Registry for:
+
+- stdin routing
+- process lifecycle management
+- session tracking
+
+---
+
+## stdin Piping
+
+User input is dynamically piped into the running process through the standard input stream.
+
+---
+
+## Cleanup & Termination
+
+When execution ends or a connection closes:
+
+1. `SIGKILL` is sent to the entire process group
+2. All subprocesses are terminated
+3. Temporary workspace directories are deleted
 
 ---
 
 # 📂 Project Structure
 
-```text id="b1f3uy"
+```text id="pgsn9d"
 .
 ├── src/
-├── docker/
-├── tmp/
-├── package.json
+│   ├── execution/
+│   │   ├── manager/      # LiveExecution & Process Registry
+│   │   ├── runner/       # Interactive & Stream Runners
+│   │   └── workspace/    # Workspace & Cleanup Managers
+│   └── websocket/        # Handlers (stdin, terminate, gateway)
 ├── Dockerfile
 └── README.md
-```
-
----
-
-# ⚡ Supported Execution Modes
-
-| Mode      | Description                                 |
-| --------- | ------------------------------------------- |
-| REST      | Blocking execution with final JSON response |
-| WebSocket | Live execution with streamed events         |
-
----
-
-# 🧪 Example REST Request
-
-```bash id="ehv9bw"
-curl -X POST http://localhost:3000/execute \
-  -H "Content-Type: application/json" \
-  -d '{"language":"cpp","code":"#include<iostream>\nint main(){std::cout<<\"Hello\";}"}'
-```
-
----
-
-# 📡 Example WebSocket Connection
-
-```text id="vq8dnn"
-ws://localhost:3000
 ```
 
 ---
@@ -167,12 +219,12 @@ ws://localhost:3000
 
 Contributions, improvements, and issue reports are welcome.
 
-You can:
+Feel free to:
 
-* Fork the repository
-* Open pull requests
-* Report bugs
-* Suggest new features
+- Fork the repository
+- Open pull requests
+- Report issues
+- Suggest improvements
 
 ---
 

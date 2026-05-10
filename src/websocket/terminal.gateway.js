@@ -18,6 +18,7 @@ export const terminalGateway = (socket) => {
       switch (parsed.event) {
         case "execute": {
           const jobId = uuid();
+          socketJobRegistry.add(socket, jobId);
 
           socket.send(
             JSON.stringify({
@@ -26,7 +27,13 @@ export const terminalGateway = (socket) => {
             }),
           );
 
-          await LiveExecutionManager.executeCpp(jobId, parsed.code, socket);
+          await LiveExecutionManager.execute({
+            jobId,
+            language: parsed.language,
+            code: parsed.code,
+            workspacePath: null,
+            socket
+          });
 
           break;
         }
@@ -44,6 +51,7 @@ export const terminalGateway = (socket) => {
         }
       }
     } catch {
+        console.error("Failed to process message:", message);
       socket.send(
         JSON.stringify({
           event: "error",
@@ -60,6 +68,6 @@ export const terminalGateway = (socket) => {
         terminateExecution(jobId, socket);
     }
 
-    socketJobRegistry.removeSocket(socket);
+    socketJobRegistry.remove(socket);
   });
 };
