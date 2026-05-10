@@ -6,6 +6,10 @@ import { handleStdin } from "./stdin.handler.js";
 
 import { terminateExecution } from "./terminate.handler.js";
 
+import { socketJobRegistry } from "../execution/manager/socket.job.registry.js";
+
+import { socketGuard } from "../security/socket.guard.js";
+
 export const terminalGateway = (socket) => {
   socket.on("message", async (message) => {
     try {
@@ -49,6 +53,13 @@ export const terminalGateway = (socket) => {
     }
   });
 
-    socket.on("close", () => {
-    });
+  socket.on("close", () => {
+    const jobs = socketJobRegistry.getJobs(socket);
+
+    for (const jobId of jobs) {
+        terminateExecution(jobId, socket);
+    }
+
+    socketJobRegistry.removeSocket(socket);
+  });
 };
