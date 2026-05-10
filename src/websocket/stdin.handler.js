@@ -1,4 +1,5 @@
 import { processRegistry } from "../execution/manager/process.registry.js";
+import { stdinBufferRegistry } from "../execution/manager/stdin.buffer.registry.js";
 import { validateStdin } from "../security/stdin.validator.js";
 export const handleStdin = (input, jobId, socket) => {
     if (!validateStdin(input)) {
@@ -13,7 +14,8 @@ export const handleStdin = (input, jobId, socket) => {
     try {
         const processData = processRegistry.get(jobId);
         if (!processData) {
-            console.error(`No active process found for job ID: ${jobId}`);
+            // Process might not be spawned yet — buffer and flush on runner start.
+            stdinBufferRegistry.push(jobId, input);
             return;
         }
         processData.process.stdin.write(input);
