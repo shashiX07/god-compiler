@@ -7,6 +7,7 @@ import {
 } from "../languages/cpp/cpp.runtime.js";
 import { CRuntime } from "../languages/c/c.runtime.js";
 import { PythonRuntime } from "../languages/python/python.runtime.js";
+import { RustRuntime } from "../languages/rust/rust.runtime.js";
 
 runtimeRegistry.register(
   "cpp",
@@ -21,4 +22,9 @@ runtimeRegistry.register(
 runtimeRegistry.register(
     "python",
     PythonRuntime
-)
+);
+
+runtimeRegistry.register(
+  "rust",
+  RustRuntime,
+);

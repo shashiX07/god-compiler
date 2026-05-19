@@ -2,6 +2,13 @@
 
 God Compiler is a high-performance, secure, and real-time code execution engine built with Node.js and Docker. It provides both REST and WebSocket execution interfaces for running code inside isolated, resource-constrained environments.
 
+Supported runtimes today:
+
+- C
+- C++
+- Python
+- Rust
+
 ---
 
 # ✨ Features
@@ -77,7 +84,7 @@ Supports killing running executions manually using a `jobId`.
 | Runtime                 | Node.js                       |
 | Framework               | Express                       |
 | Real-time Communication | ws (WebSockets)               |
-| Compiler                | g++ (GCC)                     |
+| Compiler                | g++, rustc, python3          |
 | Containerization        | Docker                        |
 | Utilities               | UUID, Child Process (`spawn`) |
 

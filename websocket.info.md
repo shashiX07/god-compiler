@@ -30,7 +30,7 @@ Connection health is maintained using the standard WebSocket ping/pong mechanism
 
 ---
 
-# Step A — Execute Code
+# Step A - Execute Code
 
 Starts a new execution session.
 
@@ -39,8 +39,8 @@ Starts a new execution session.
 ```json id="qvh9vd"
 {
   "event": "execute",
-  "language": "cpp",
-  "code": "#include <iostream>\nint main() { int x; std::cin >> x; std::cout << x * 2; return 0; }"
+  "language": "rust",
+  "code": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    println!(\"{}\", input.trim());\n}"
 }
 ```
 
@@ -65,7 +65,7 @@ This `jobId` is required for:
 
 ---
 
-# Step B — Send stdin Input
+# Step B - Send stdin Input
 
 Allows clients to send input to a running process.
 
@@ -85,7 +85,7 @@ Allows clients to send input to a running process.
 
 ---
 
-# Step C — Receive Server Events
+# Step C - Receive Server Events
 
 The server streams execution updates in real time.
 

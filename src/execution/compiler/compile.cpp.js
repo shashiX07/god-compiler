@@ -1,8 +1,8 @@
 import { spawn } from "child_process";
 
-export const compileCpp = (sourceFile, outputFile, cwd) => {
+export const compileProgram = (compiler, args, cwd) => {
     return new Promise((resolve) => {
-        const compilerProcess = spawn("g++", [sourceFile, "-o", outputFile], { cwd });
+        const compilerProcess = spawn(compiler, args, { cwd });
 
         let stdout = "";
         let stderr = "";
@@ -68,4 +68,8 @@ export const compileCpp = (sourceFile, outputFile, cwd) => {
             });
         });
     });
+};
+
+export const compileCpp = (sourceFile, outputFile, cwd) => {
+    return compileProgram("g++", [sourceFile, "-o", outputFile], cwd);
 };

@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import { EXECUTION_CONSTANTS } from '../../constants/execution.constants.js';
 import { processRegistry } from '../manager/process.registry.js';
 import { OutputMonitor } from '../../security/output.monitor.js';
+import { stdinBufferRegistry } from '../manager/stdin.buffer.registry.js';
 
 
 const sendSocketEvent = (socket, payload) => {
@@ -15,6 +16,13 @@ export const interactiveRunner = (jobId, executablePath, cwd, socket, args = [])
         const childProcess = spawn(executablePath, args, { cwd, detached: true });
         const outputMonitor = new OutputMonitor(childProcess);
         processRegistry.add(jobId, {process: childProcess, socket});
+        for (const chunk of stdinBufferRegistry.drain(jobId)) {
+            try {
+                childProcess.stdin.write(chunk);
+            } catch {
+                // ignore buffered stdin write failures
+            }
+        }
 
         let timeoutTriggered = false;
 
