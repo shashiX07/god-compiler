@@ -50,8 +50,8 @@ export const terminalGateway = (socket) => {
           break;
         }
       }
-    } catch {
-        console.error("Failed to process message:", message);
+    } catch (error) {
+        console.error("Failed to process message:", message, error);
       socket.send(
         JSON.stringify({
           event: "error",
