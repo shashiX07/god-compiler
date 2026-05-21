@@ -18,4 +18,5 @@ export const env = {
     TEMP_DIR: isUnixStylePathOnWindows ? defaultTempDir : (configuredTempDir || defaultTempDir),
     RUN_TIMEOUT: Number(process.env.RUN_TIMEOUT, 10) || 30000,
     MAX_CONCURRENT_EXECUTIONS: Number(process.env.MAX_CONCURRENT_EXECUTIONS, 10) || 5,
+    PYTHON_EXECUTABLE: process.env.PYTHON_EXECUTABLE || "",
 }

@@ -11,9 +11,23 @@ const sendSocketEvent = (socket, payload) => {
     }
 };
 
-export const interactiveRunner = (jobId, executablePath, cwd, socket, args = []) => {
+export const interactiveRunner = (
+    jobId,
+    executablePath,
+    cwd,
+    socket,
+    args = [],
+    options = {},
+) => {
     return new Promise((resolve, reject) => {
-        const childProcess = spawn(executablePath, args, { cwd, detached: true });
+        const childProcess = spawn(executablePath, args, {
+            cwd,
+            detached: true,
+            env: {
+                ...process.env,
+                ...(options.env || {}),
+            },
+        });
         const outputMonitor = new OutputMonitor(childProcess);
         processRegistry.add(jobId, {process: childProcess, socket});
         for (const chunk of stdinBufferRegistry.drain(jobId)) {
