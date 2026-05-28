@@ -1,18 +1,20 @@
 class ProcessRegistry {
     constructor() {
-        this.process = new Map();
+        this.processes = new Map();
+        // Backward-compatible alias for older accessors.
+        this.process = this.processes;
     }
     
     add(jobId, process) {
-        this.process.set(jobId, process);
+        this.processes.set(jobId, process);
     }
 
     get(jobId) {
-        return this.process.get(jobId);
+        return this.processes.get(jobId);
     }
 
     remove(jobId){
-        this.process.delete(jobId);
+        this.processes.delete(jobId);
     }
 
 }

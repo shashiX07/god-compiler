@@ -19,6 +19,9 @@ export const handleStdin = (input, jobId, socket) => {
             return;
         }
         processData.process.stdin.write(input);
+        if (typeof processData.resetIdleTimeout === "function") {
+            processData.resetIdleTimeout();
+        }
     } catch (error) {
         console.error("Error writing to process stdin:", error);
     }

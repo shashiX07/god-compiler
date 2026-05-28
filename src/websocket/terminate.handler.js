@@ -10,6 +10,9 @@ export const terminateExecution = (jobId, socket) => {
         return;
     }
     try {
+        if (typeof processData.clearTimeouts === "function") {
+            processData.clearTimeouts();
+        }
         if (process.platform === 'win32') {
             processData.process.kill('SIGKILL');
         } else {

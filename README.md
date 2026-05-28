@@ -1,246 +1,218 @@
-# 🚀 God Compiler
+<div align="center">
 
-God Compiler is a high-performance, secure, and real-time code execution engine built with Node.js and Docker. It provides both REST and WebSocket execution interfaces for running code inside isolated, resource-constrained environments.
+```
+ ██████╗  ██████╗ ██████╗      ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗     ███████╗██████╗
+██╔════╝ ██╔═══██╗██╔══██╗    ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║██║     ██╔════╝██╔══██╗
+██║  ███╗██║   ██║██║  ██║    ██║     ██║   ██║██╔████╔██║██████╔╝██║██║     █████╗  ██████╔╝
+██║   ██║██║   ██║██║  ██║    ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██║██║     ██╔══╝  ██╔══██╗
+╚██████╔╝╚██████╔╝██████╔╝    ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ██║███████╗███████╗██║  ██║
+ ╚═════╝  ╚═════╝ ╚═════╝      ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝
+```
 
-Supported runtimes today:
+**A high-performance, secure, real-time code execution engine**
 
-- C
-- C++
-- Python
-- Rust
+[![Node.js](https://img.shields.io/badge/Node.js-Runtime-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+[![Express](https://img.shields.io/badge/Express-Framework-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com)
+[![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-010101?style=flat-square&logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F5C518?style=flat-square)](LICENSE)
 
----
+Run **C**, **C++**, **Python**, and **Rust** inside fully isolated Docker containers — with live streaming output and interactive stdin over WebSockets.
 
-# ✨ Features
-
-## Dual Execution Modes
-
-### REST API
-
-Stateless request-response execution model designed for batch jobs and one-off executions.
-
-### WebSocket API
-
-Stateful interactive execution model with real-time streaming and stdin support.
+</div>
 
 ---
 
-## Interactive Terminal Support
+## Overview
 
-- Full bidirectional stdin support
-- Real-time user input handling
-- Interactive terminal-like execution sessions
+God Compiler is a dual-mode code execution engine that offers a classic REST API for batch execution and a real-time WebSocket API for interactive, IDE-style sessions. Every execution runs inside a UUID-scoped workspace within Docker, with strict resource limits and automatic cleanup — keeping the host safe and the system stable under concurrent load.
 
 ---
 
-## Persistent Execution Sessions
+## Features
 
-- Socket-to-process mapping
-- Long-running interactive session management
-- Job-based execution tracking using `jobId`
-
----
-
-## Real-Time Streaming
-
-- Live stdout streaming
-- Live stderr streaming
-- Instant execution feedback
+- **Dual Execution Modes** — REST for simple request-response flows; WebSocket for interactive real-time sessions
+- **Live Streaming** — stdout and stderr are emitted as they are produced, not buffered at the end
+- **Interactive stdin** — pipe user input directly into a running process at any point during execution
+- **Process Isolation** — each job runs in a dedicated UUID workspace; the entire process group is killed on termination
+- **Configurable Constraints** — timeouts, output limits, and concurrency cap are all controlled via `.env`
+- **Automatic Cleanup** — workspaces, binaries, and process handles are torn down on completion or disconnect
 
 ---
 
-## Secure Isolation
+## Supported Languages
 
-- UUID-based isolated workspaces
-- Automatic temporary workspace cleanup
-- Process-group level termination
-
----
-
-## Resource Protection
-
-- Output buffer limit: `1MB`
-- Execution timeout: `5 seconds`
-- Compilation timeout: `10 seconds`
+| Language | Compiler / Runtime |
+|----------|--------------------|
+| C        | `gcc`              |
+| C++      | `g++`              |
+| Python   | `python3`          |
+| Rust     | `rustc`            |
 
 ---
 
-## Concurrency Control
+## Tech Stack
 
-Built-in concurrency guard to maintain stability under heavy load.
-
----
-
-## Manual Process Termination
-
-Supports killing running executions manually using a `jobId`.
-
----
-
-# 🛠️ Tech Stack
-
-| Component               | Technology                    |
-| ----------------------- | ----------------------------- |
-| Runtime                 | Node.js                       |
-| Framework               | Express                       |
-| Real-time Communication | ws (WebSockets)               |
-| Compiler                | g++, rustc, python3          |
-| Containerization        | Docker                        |
-| Utilities               | UUID, Child Process (`spawn`) |
+| Layer                   | Technology              |
+|-------------------------|-------------------------|
+| Runtime                 | Node.js                 |
+| HTTP Framework          | Express                 |
+| Real-time Communication | `ws` (WebSockets)       |
+| Containerization        | Docker                  |
+| Process Management      | `child_process.spawn`   |
+| Utilities               | UUID                    |
 
 ---
 
-# 🚀 Quick Start
+## Quick Start
 
----
+### Prerequisites
 
-# 1. Prerequisites
+- [Docker](https://www.docker.com/products/docker-desktop) and Docker Desktop must be installed.
 
-Install the following dependencies:
+### 1. Clone the Repository
 
-- Docker
-- Docker Desktop
+```bash
+git clone https://github.com/your-username/god-compiler.git
+cd god-compiler
+```
 
----
+### 2. Configure Environment
 
-# 2. Build Docker Image
+Copy the example env file and adjust values as needed (see [Configuration](#configuration) below):
 
-```bash id="3yzdfg"
+```bash
+cp .env.example .env
+```
+
+### 3. Build the Docker Image
+
+```bash
 docker build -t god-compiler .
 ```
 
----
+### 4. Run the Container
 
-# 3. Run Docker Container
-
-```bash id="4jx69u"
+```bash
 docker run -p 3000:3000 -v $(pwd):/app god-compiler
 ```
 
----
-
-# 📖 API Documentation
+The server starts at `http://localhost:3000` (REST) and `ws://localhost:3000` (WebSocket).
 
 ---
 
-# REST API
+## Configuration
 
-Traditional blocking execution model.
+All runtime parameters are controlled through environment variables. Create a `.env` file in the project root:
 
-Best suited for:
+```env
+# Server
+PORT=3000
+NODE_ENV=development
 
-- Batch execution
-- Script execution
-- Backend integrations
+# Execution Limits
+MAX_CODE_SIZE=10000
+RUN_TIMEOUT=30000
+MAX_EXECUTION_TIMEOUT=600000
+MAX_CONCURRENT_EXECUTIONS=5
 
-## Documentation
+# Storage
+TEMP_DIR=/tmp/executions
 
-```md id="w70q2y"
-[REST API Info](./rest.info.md)
+# Python (optional: set a custom Python executable path)
+PYTHON_EXECUTABLE=
 ```
 
+### Variable Reference
+
+| Variable                   | Default              | Description                                                     |
+|----------------------------|----------------------|-----------------------------------------------------------------|
+| `PORT`                     | `3000`               | Port the HTTP and WebSocket server listens on                   |
+| `NODE_ENV`                 | `development`        | Runtime environment (`development` / `production`)              |
+| `MAX_CODE_SIZE`            | `10000`              | Maximum allowed source code size in characters                  |
+| `TEMP_DIR`                 | System temp dir      | Directory where UUID execution workspaces are created           |
+| `RUN_TIMEOUT`              | `30000` (30s)        | Per-execution run timeout in milliseconds                       |
+| `MAX_EXECUTION_TIMEOUT`    | `600000` (10 min)    | Absolute upper bound for any single execution session           |
+| `MAX_CONCURRENT_EXECUTIONS`| `5`                  | Max parallel jobs allowed across REST and WebSocket combined    |
+| `PYTHON_EXECUTABLE`        | System `python3`     | Path to a custom Python binary (leave empty to use system default) |
+
+> All limits apply globally across both REST and WebSocket execution modes.
+
 ---
 
-# WebSocket API
+## API Documentation
 
-Interactive stateful execution model.
+God Compiler exposes two independent execution interfaces. Full details for each are documented separately:
 
-Best suited for:
+### REST API
 
-- Online IDEs
-- Remote shells
-- Interactive execution sessions
+> Stateless · Request-Response · Best for batch jobs and backend integrations
 
-## Documentation
+📄 **[View REST API Reference →](./rest.info.md)**
 
-```md id="39enls"
-[WebSocket Info](./websocket.info.md)
+Covers:
+- `GET /` — server status
+- `GET /health` — container health check
+- `POST /execute` — compile and run code, with response schemas for success, compilation error, and timeout
+
+---
+
+### WebSocket API
+
+> Stateful · Real-time Streaming · Best for online IDEs and interactive shells
+
+📄 **[View WebSocket API Reference →](./websocket.info.md)**
+
+Covers:
+- Connection and protocol format
+- Full execution lifecycle: `execute` → `stdin` → streaming events → `exit`
+- Manual process termination via `terminate`
+- All error scenarios: compilation failure, timeout, output limit, invalid job ID
+
+---
+
+## Project Structure
+
 ```
-
----
-
-# 🛡️ Security & Constraints
-
-| Constraint          | Limit      |
-| ------------------- | ---------- |
-| Max Concurrent Jobs | 3          |
-| Max Output Size     | 1MB        |
-| Execution Timeout   | 5 Seconds  |
-| Compilation Timeout | 10 Seconds |
-
----
-
-# 🔒 Isolation & Interactive Execution Model
-
----
-
-## Workspace Isolation
-
-Every execution request creates a unique UUID-based workspace directory.
-
----
-
-## Persistent Session Registry
-
-Interactive jobs are stored inside a Process Registry for:
-
-- stdin routing
-- process lifecycle management
-- session tracking
-
----
-
-## stdin Piping
-
-User input is dynamically piped into the running process through the standard input stream.
-
----
-
-## Cleanup & Termination
-
-When execution ends or a connection closes:
-
-1. `SIGKILL` is sent to the entire process group
-2. All subprocesses are terminated
-3. Temporary workspace directories are deleted
-
----
-
-# 📂 Project Structure
-
-```text id="pgsn9d"
 .
 ├── src/
 │   ├── execution/
 │   │   ├── manager/      # LiveExecution & Process Registry
 │   │   ├── runner/       # Interactive & Stream Runners
 │   │   └── workspace/    # Workspace & Cleanup Managers
-│   └── websocket/        # Handlers (stdin, terminate, gateway)
+│   └── websocket/        # Handlers: stdin, terminate, gateway
+├── .env.example
 ├── Dockerfile
 └── README.md
 ```
 
 ---
 
-# 🤝 Contributing
+## Security Model
+
+- **Workspace Isolation** — every execution gets a unique UUID directory, preventing any cross-job file access
+- **Process Group Termination** — processes are spawned with `detached: true`, so a single `SIGKILL` tears down the entire subprocess tree
+- **Automatic Cleanup** — on job completion or unexpected WebSocket disconnect, workspaces are deleted and all resources are released immediately
+
+---
+
+## Contributing
 
 Contributions, improvements, and issue reports are welcome.
 
-Feel free to:
-
-- Fork the repository
-- Open pull requests
-- Report issues
-- Suggest improvements
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature`
+3. Commit your changes: `git commit -m "feat: add your feature"`
+4. Push and open a pull request
 
 ---
 
-# 👨‍💻 Author
+## Author
 
-Shashikant
+Built by **Shashikant**
 
 ---
 
-# 📄 License
+## License
 
-MIT License
+[MIT License](LICENSE)

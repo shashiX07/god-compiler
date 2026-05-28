@@ -29,25 +29,64 @@ export const interactiveRunner = (
             },
         });
         const outputMonitor = new OutputMonitor(childProcess);
-        processRegistry.add(jobId, {process: childProcess, socket});
+
+        let timeoutReason = null;
+        let idleTimeout = null;
+        let maxTimeout = null;
+
+        const killProcess = (reason) => {
+            if (timeoutReason) return;
+            timeoutReason = reason;
+            try {
+                if (process.platform === 'win32') {
+                    childProcess.kill('SIGKILL');
+                } else {
+                    process.kill(-childProcess.pid, 'SIGKILL');
+                }
+            } catch (error) {
+                if (error?.code !== 'ESRCH') {
+                    console.error("Error killing process on timeout:", error);
+                }
+            }
+        };
+
+        const startIdleTimeout = () => {
+            return setTimeout(() => {
+                killProcess("idle_timeout");
+            }, EXECUTION_CONSTANTS.RUN_TIMEOUT);
+        };
+
+        const resetIdleTimeout = () => {
+            if (!EXECUTION_CONSTANTS.RUN_TIMEOUT) return;
+            clearTimeout(idleTimeout);
+            idleTimeout = startIdleTimeout();
+        };
+
+        const clearTimeouts = () => {
+            clearTimeout(idleTimeout);
+            clearTimeout(maxTimeout);
+        };
+
+        idleTimeout = startIdleTimeout();
+        maxTimeout = setTimeout(() => {
+            killProcess("max_execution_timeout");
+        }, EXECUTION_CONSTANTS.MAX_EXECUTION_TIMEOUT);
+
+        processRegistry.add(jobId, {
+            process: childProcess,
+            socket,
+            resetIdleTimeout,
+            clearTimeouts,
+        });
+
         for (const chunk of stdinBufferRegistry.drain(jobId)) {
             try {
                 childProcess.stdin.write(chunk);
+                resetIdleTimeout();
             } catch {
                 // ignore buffered stdin write failures
             }
         }
-
-        let timeoutTriggered = false;
-
-        const timeout = setTimeout(() => {
-            timeoutTriggered = true;
-            try {
-                process.kill(-childProcess.pid, 'SIGKILL');
-            } catch (error) {
-                console.error("Error killing process on timeout:", error);
-            }
-        }, EXECUTION_CONSTANTS.RUN_TIMEOUT);
 
         childProcess.stdout.on("data", (data) => {
             outputMonitor.track(data);
@@ -66,14 +105,18 @@ export const interactiveRunner = (
         })
 
         childProcess.on("close", (code) => {
-            clearTimeout(timeout);
+            clearTimeouts();
             processRegistry.remove(jobId);
 
-            if (timeoutTriggered) {
+            if (timeoutReason) {
+                const message = timeoutReason === "max_execution_timeout"
+                    ? "Execution Timeout: Maximum execution time exceeded"
+                    : "Execution Timeout: Process killed after exceeding time limit";
                 sendSocketEvent(socket, {
                     event: "exit",
-                    data: "Execution Timeout: Process killed after exceeding time limit",
+                    data: message,
                     timeout: true,
+                    timeoutType: timeoutReason,
                     exitCode: null
                 });
                 return resolve();
@@ -88,7 +131,7 @@ export const interactiveRunner = (
         });
 
         childProcess.on("error", (error) => {
-            clearTimeout(timeout);
+            clearTimeouts();
             processRegistry.remove(jobId);
             reject(error);
         });
