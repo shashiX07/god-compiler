@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import executeRoutes from './routes/execute.routes.js';
+import { listLanguages } from './controllers/execute.controller.js';
 import { apiLimiter } from './security/rate.limit.js';
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json({
 }));
 
 app.use('/execute', executeRoutes);
+app.get('/languages', listLanguages);
 
 // root endpoint
 app.get("/", (req, res) => {

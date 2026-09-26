@@ -29,6 +29,8 @@ export const interactiveRunner = (
             },
         });
         const outputMonitor = new OutputMonitor(childProcess);
+        let stdout = "";
+        let stderr = "";
 
         let timeoutReason = null;
         let idleTimeout = null;
@@ -89,18 +91,22 @@ export const interactiveRunner = (
         }
 
         childProcess.stdout.on("data", (data) => {
+            const text = data.toString();
+            stdout += text;
             outputMonitor.track(data);
             sendSocketEvent(socket, {
                 event: 'stdout',
-                data: data.toString()
+                data: text
             });
         });
 
         childProcess.stderr.on("data", (data) => {
+            const text = data.toString();
+            stderr += text;
             outputMonitor.track(data);
             sendSocketEvent(socket, {
                 event: "stderr",
-                data: data.toString()
+                data: text
             });
         })
 
@@ -119,7 +125,15 @@ export const interactiveRunner = (
                     timeoutType: timeoutReason,
                     exitCode: null
                 });
-                return resolve();
+                return resolve({
+                    success: false,
+                    phase: "execution",
+                    timeout: true,
+                    timeoutType: timeoutReason,
+                    stdout,
+                    stderr: message,
+                    exitCode: null,
+                });
             }
             sendSocketEvent(socket, {
                 event: "exit",
@@ -127,7 +141,14 @@ export const interactiveRunner = (
                 exitCode: code
             });
 
-            resolve();
+            resolve({
+                success: code === 0,
+                phase: "execution",
+                timeout: false,
+                stdout,
+                stderr,
+                exitCode: code,
+            });
         });
 
         childProcess.on("error", (error) => {

@@ -8,6 +8,9 @@ class RuntimeRegistery {
     get(language) {
         return this.runtime.get(language);
     }
+    list() {
+        return [...this.runtime.keys()].sort();
+    }
 }
 
 export const runtimeRegistry = new RuntimeRegistery();

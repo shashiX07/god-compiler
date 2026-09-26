@@ -1,8 +1,11 @@
 import { spawn } from "child_process";
 
-export const compileProgram = (compiler, args, cwd) => {
+export const compileProgram = (compiler, args, cwd, timeoutMs = 10000, extraEnv) => {
     return new Promise((resolve) => {
-        const compilerProcess = spawn(compiler, args, { cwd });
+        const compilerProcess = spawn(compiler, args, {
+            cwd,
+            env: extraEnv ? { ...process.env, ...extraEnv } : process.env,
+        });
 
         let stdout = "";
         let stderr = "";
@@ -15,7 +18,7 @@ export const compileProgram = (compiler, args, cwd) => {
             } catch {
                 // ignore
             }
-        }, 10000); // 10 seconds timeout for compilation
+        }, timeoutMs);
 
         compilerProcess.stdout.on("data", (data) => {
             stdout += data.toString();
@@ -59,11 +62,14 @@ export const compileProgram = (compiler, args, cwd) => {
 
         compilerProcess.on("error", (error) => {
             clearTimeout(timeout);
+            const missing = error?.code === "ENOENT"
+                ? `Compiler '${compiler}' is not installed on this server.`
+                : error.message;
             resolve({
                 success: false,
                 timeout: false,
                 stdout,
-                stderr: `Failed to start compilation process: ${error.message}`,
+                stderr: `Failed to start compilation process: ${missing}`,
                 exitCode: null,
             });
         });

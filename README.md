@@ -17,7 +17,7 @@
 [![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-010101?style=flat-square&logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F5C518?style=flat-square)](LICENSE)
 
-Run **C**, **C++**, **Python**, and **Rust** inside fully isolated Docker containers — with live streaming output and interactive stdin over WebSockets.
+Run **C**, **C++**, **Python**, **Rust**, **Java**, **Go**, **C#**, **Kotlin**, **JavaScript**, **TypeScript**, **PHP**, **Ruby**, **Swift**, **Bash**, and **SQL** inside isolated Docker workspaces — with live streaming output and interactive stdin over WebSockets.
 
 </div>
 
@@ -42,12 +42,25 @@ God Compiler is a dual-mode code execution engine that offers a classic REST API
 
 ## Supported Languages
 
-| Language | Compiler / Runtime |
-|----------|--------------------|
-| C        | `gcc`              |
-| C++      | `g++`              |
-| Python   | `python3`          |
-| Rust     | `rustc`            |
+| Language     | Compiler / Runtime                         |
+|--------------|--------------------------------------------|
+| C            | `g++`                                      |
+| C++          | `g++`                                      |
+| Python       | `python3`                                  |
+| Rust         | `rustc`                                    |
+| JavaScript   | `node`                                     |
+| TypeScript   | `tsc` + `node`                             |
+| Java         | `javac` + `java`                           |
+| Go           | `go build`                                 |
+| C#           | `mcs` + `mono`                             |
+| Kotlin       | `kotlinc` + `java`                         |
+| PHP          | `php`                                      |
+| Ruby         | `ruby`                                     |
+| Swift        | `swiftc` (optional; install on the host)   |
+| Bash / sh    | `bash`                                     |
+| SQL          | SQLite playground (`python3` + `sqlite3`)  |
+
+SQL is a seeded learning playground, not a bare `sqlite3` dump. Each run starts with departments, employees, customers, products, orders, and order_items, then pretty-prints result tables. Meta commands: `.tables`, `.schema [name]`, `.count`, `.help`, `SHOW TABLES`, `DESCRIBE table`.
 
 ---
 

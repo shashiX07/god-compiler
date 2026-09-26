@@ -79,6 +79,14 @@ application/json
 }
 ```
 
+`language` accepts any registered runtime, including aliases such as `js`, `ts`, `c#`, `golang`, and `sqlite`.
+
+```http
+GET /languages
+```
+
+Returns the list of runtimes this container can execute.
+
 ---
 
 # Request Fields

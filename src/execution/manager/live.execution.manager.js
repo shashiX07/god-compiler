@@ -13,7 +13,33 @@ export class LiveExecutionManager {
     context.workspacePath = workspacePath;
 
     try {
-      const runtime = RuntimeFactory.create(context.language);
+      let runtime;
+      try {
+        runtime = RuntimeFactory.create(context.language);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (context.socket) {
+          context.socket.send(
+            JSON.stringify({
+              event: "error",
+              data: message,
+            }),
+          );
+          context.socket.send(
+            JSON.stringify({
+              event: "exit",
+              data: message,
+              exitCode: 1,
+            }),
+          );
+        }
+        return {
+          success: false,
+          phase: "prepare",
+          message,
+          exitCode: 1,
+        };
+      }
 
       const result = await RuntimePipeline.run(runtime, context);
 

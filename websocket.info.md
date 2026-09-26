@@ -4,6 +4,8 @@ The God Compiler WebSocket API provides real-time code execution with interactiv
 
 ---
 
+Supported `language` values: `c`, `cpp`, `python`, `rust`, `javascript`, `typescript`, `java`, `go`, `csharp`, `kotlin`, `php`, `ruby`, `swift`, `sql`, `bash`, `sh`. Aliases such as `js`, `ts`, `c#`, `golang`, and `sqlite` are accepted.
+
 # 1. Connection & Protocol
 
 ## WebSocket URL
@@ -39,8 +41,8 @@ Starts a new execution session.
 ```json id="qvh9vd"
 {
   "event": "execute",
-  "language": "rust",
-  "code": "use std::io::{self, Read};\n\nfn main() {\n    let mut input = String::new();\n    io::stdin().read_to_string(&mut input).unwrap();\n    println!(\"{}\", input.trim());\n}"
+  "language": "sql",
+  "code": "SELECT name, title, salary FROM employees ORDER BY salary DESC;"
 }
 ```
 
