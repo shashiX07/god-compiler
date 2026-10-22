@@ -114,10 +114,27 @@ Returned when compilation and execution complete successfully.
     "phase": "execution",
     "stdout": "Hello",
     "stderr": "",
-    "exitCode": 0
+    "exitCode": 0,
+    "files": []
   }
 }
 ```
+
+Python executions that create Matplotlib PNGs receive them in `result.files`.
+Each file contains a workspace-relative `name`, `mimeType`, and base64-encoded
+`data` value:
+
+```json
+{
+  "name": "plot.png",
+  "mimeType": "image/png",
+  "data": "iVBORw0KGgo..."
+}
+```
+
+PNG files must be saved using a relative path, for example
+`plt.savefig("plot.png")`. They are created inside the execution's temporary
+workspace and are deleted automatically after the response has been prepared.
 
 ---
 
@@ -196,6 +213,7 @@ Temporary files are deleted automatically after execution:
 
 * Source files
 * Compiled binaries
+* Matplotlib PNG artifacts
 * Temporary workspaces
 
 Cleanup occurs regardless of:

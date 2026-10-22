@@ -96,6 +96,7 @@ The server streams execution updates in real time.
 | `status` | Execution phase updates             |
 | `stdout` | Real-time standard output           |
 | `stderr` | Runtime errors or compiler warnings |
+| `file`   | A generated PNG file                |
 | `exit`   | Final execution result              |
 
 ---
@@ -123,6 +124,25 @@ The server streams execution updates in real time.
   "data": "10"
 }
 ```
+
+## Generated PNG Event
+
+When Python code saves a PNG in the execution workspace, the server sends a
+JSON `file` event after the process exits:
+
+```json
+{
+  "event": "file",
+  "name": "plot.png",
+  "mimeType": "image/png",
+  "data": "iVBORw0KGgo..."
+}
+```
+
+The `data` field is base64-encoded and can be converted to a browser `Blob` or
+data URL. Save figures with a relative path such as `plt.savefig("plot.png")`;
+the workspace and its generated files are removed immediately after the
+execution finishes.
 
 ---
 

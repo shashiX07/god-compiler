@@ -5,6 +5,7 @@ import { CleanupManager } from "../workspace/cleanup.manager.js";
 import { RuntimeFactory } from "../runtime/runtime.factory.js";
 
 import { RuntimePipeline } from "../runtime/runtime.pipeline.js";
+import { collectPngArtifacts } from "../workspace/artifact.manager.js";
 
 export class LiveExecutionManager {
   static async execute(context) {
@@ -42,6 +43,20 @@ export class LiveExecutionManager {
       }
 
       const result = await RuntimePipeline.run(runtime, context);
+      result.files = await collectPngArtifacts(workspacePath);
+
+      for (const file of result.files) {
+        if (context.socket?.readyState === context.socket.OPEN) {
+          context.socket.send(
+            JSON.stringify({
+              event: "file",
+              name: file.name,
+              mimeType: file.mimeType,
+              data: file.data,
+            }),
+          );
+        }
+      }
 
       // In interactive mode, the runner streams stdout/stderr/exit over the socket.
       // If we fail before spawning a process (e.g., compilation failure), emit something

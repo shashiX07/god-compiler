@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     make \
     python3 \
+    python3-venv \
     rustc \
     default-jdk-headless \
     golang-go \
@@ -38,6 +39,10 @@ RUN curl -fsSL "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_
 RUN npm install -g typescript \
   && npm cache clean --force
 
+COPY requirements.txt ./
+RUN python3 -m venv /opt/venv \
+  && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
 # Swift is optional: the runtime is registered, but the official toolchain
 # is too large for this image. Install `swiftc` on the host to enable it.
 
@@ -48,7 +53,8 @@ COPY --from=builder /app ./
 RUN mkdir -p /tmp/executions && chown -R runner:runner /app /tmp/executions /home/runner
 
 USER runner
-ENV GO111MODULE=on \
+ENV PATH=/opt/venv/bin:$PATH \
+    GO111MODULE=on \
     GOPATH=/home/runner/go \
     GOCACHE=/home/runner/.cache/go-build
 

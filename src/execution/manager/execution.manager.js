@@ -7,6 +7,7 @@ import { JOB_STATES } from "./state.machine.js";
 import { concurrencyGuard } from "../queue/concurrency.guard.js";
 import { RuntimeFactory } from "../runtime/runtime.factory.js";
 import { RuntimePipeline } from "../runtime/runtime.pipeline.js";
+import { collectPngArtifacts } from "../workspace/artifact.manager.js";
 
 export class ExecutionManager {
   static async executeCpp(code) {
@@ -52,6 +53,7 @@ export class ExecutionManager {
         workspacePath,
         socket: null,
       });
+      result.files = await collectPngArtifacts(workspacePath);
       job.state =
         result?.success === false ? JOB_STATES.FAILED : JOB_STATES.COMPLETED;
       return result;
