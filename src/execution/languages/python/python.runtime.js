@@ -47,15 +47,26 @@ def _deny_process_spawn(*args, **kwargs):
     )
 
 _real_run = subprocess.run
+_real_popen = subprocess.Popen
+
+def _is_fontconfig_query(command):
+    return (
+        isinstance(command, (list, tuple))
+        and len(command) == 2
+        and command[0] == "fc-list"
+        and command[1] in {"--help", "--format=%{file}\\n"}
+    )
+
+def _fontconfig_popen(command, *args, **kwargs):
+    if _is_fontconfig_query(command):
+        return _real_popen(command, *args, **kwargs)
+    return _deny_process_spawn(command, *args, **kwargs)
 
 def _fontconfig_check_output(command, *args, **kwargs):
     # Matplotlib uses these read-only fontconfig queries while importing its
     # non-interactive backend. Keep all other subprocess execution blocked.
     if (
-        isinstance(command, (list, tuple))
-        and len(command) == 2
-        and command[0] == "fc-list"
-        and command[1] in {"--help", "--format=%{file}\\n"}
+        _is_fontconfig_query(command)
     ):
         # subprocess.check_output delegates to subprocess.run. Calling the
         # saved original directly avoids the sandbox replacement below.
@@ -74,7 +85,7 @@ socket.gethostname = lambda: "localhost"
 
 os.system = _deny_process_spawn
 os.popen = _deny_process_spawn
-subprocess.Popen = _deny_process_spawn
+subprocess.Popen = _fontconfig_popen
 subprocess.run = _deny_process_spawn
 subprocess.call = _deny_process_spawn
 subprocess.check_call = _deny_process_spawn
