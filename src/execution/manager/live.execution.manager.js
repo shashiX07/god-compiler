@@ -58,26 +58,35 @@ export class LiveExecutionManager {
         }
       }
 
-      // In interactive mode, the runner streams stdout/stderr/exit over the socket.
-      // If we fail before spawning a process (e.g., compilation failure), emit something
-      // the client already understands.
-      if (result?.success === false && context.socket) {
-        if (result.stdout) {
-          context.socket.send(
-            JSON.stringify({ event: "stdout", data: String(result.stdout) }),
-          );
-        }
-        if (result.stderr) {
-          context.socket.send(
-            JSON.stringify({ event: "stderr", data: String(result.stderr) }),
-          );
+      // The runner streams stdout/stderr, but exit is emitted here so generated
+      // files always arrive before the client closes the session.
+      if (context.socket?.readyState === context.socket.OPEN) {
+        if (result?.success === false) {
+          // If we fail before spawning a process (e.g., compilation failure),
+          // emit output that the client did not receive during execution.
+          if (result.stdout) {
+            context.socket.send(
+              JSON.stringify({ event: "stdout", data: String(result.stdout) }),
+            );
+          }
+          if (result.stderr) {
+            context.socket.send(
+              JSON.stringify({ event: "stderr", data: String(result.stderr) }),
+            );
+          }
         }
 
+        const exitData =
+          result.message ||
+          (result.timeout
+            ? "Execution timeout"
+            : `Process exited with code ${result.exitCode ?? 0}`);
         context.socket.send(
           JSON.stringify({
             event: "exit",
-            data: result.message || "Compilation failed",
-            exitCode: result.exitCode ?? 1,
+            data: exitData,
+            timeout: Boolean(result.timeout),
+            exitCode: result.exitCode ?? (result.success === false ? 1 : 0),
           }),
         );
       }

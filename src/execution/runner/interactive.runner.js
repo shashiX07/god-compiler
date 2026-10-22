@@ -118,13 +118,6 @@ export const interactiveRunner = (
                 const message = timeoutReason === "max_execution_timeout"
                     ? "Execution Timeout: Maximum execution time exceeded"
                     : "Execution Timeout: Process killed after exceeding time limit";
-                sendSocketEvent(socket, {
-                    event: "exit",
-                    data: message,
-                    timeout: true,
-                    timeoutType: timeoutReason,
-                    exitCode: null
-                });
                 return resolve({
                     success: false,
                     phase: "execution",
@@ -135,12 +128,6 @@ export const interactiveRunner = (
                     exitCode: null,
                 });
             }
-            sendSocketEvent(socket, {
-                event: "exit",
-                data: "Process exited with code " + code,
-                exitCode: code
-            });
-
             resolve({
                 success: code === 0,
                 phase: "execution",

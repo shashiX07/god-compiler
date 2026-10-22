@@ -14,7 +14,6 @@ import sys
 
 BLOCKED_MODULES = {
     "requests",
-    "urllib",
     "urllib3",
     "httpx",
     "aiohttp",
