@@ -46,7 +46,7 @@ def _deny_process_spawn(*args, **kwargs):
         "Spawning subprocesses is disabled in this runtime."
     )
 
-_real_check_output = subprocess.check_output
+_real_run = subprocess.run
 
 def _fontconfig_check_output(command, *args, **kwargs):
     # Matplotlib uses these read-only fontconfig queries while importing its
@@ -57,7 +57,12 @@ def _fontconfig_check_output(command, *args, **kwargs):
         and command[0] == "fc-list"
         and command[1] in {"--help", "--format=%{file}\\n"}
     ):
-        return _real_check_output(command, *args, **kwargs)
+        # subprocess.check_output delegates to subprocess.run. Calling the
+        # saved original directly avoids the sandbox replacement below.
+        kwargs = dict(kwargs)
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["check"] = True
+        return _real_run(command, *args, **kwargs).stdout
     return _deny_process_spawn(command, *args, **kwargs)
 
 socket.socket = _deny_network
