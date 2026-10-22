@@ -46,6 +46,20 @@ def _deny_process_spawn(*args, **kwargs):
         "Spawning subprocesses is disabled in this runtime."
     )
 
+_real_check_output = subprocess.check_output
+
+def _fontconfig_check_output(command, *args, **kwargs):
+    # Matplotlib uses these read-only fontconfig queries while importing its
+    # non-interactive backend. Keep all other subprocess execution blocked.
+    if (
+        isinstance(command, (list, tuple))
+        and len(command) == 2
+        and command[0] == "fc-list"
+        and command[1] in {"--help", "--format=%{file}\\n"}
+    ):
+        return _real_check_output(command, *args, **kwargs)
+    return _deny_process_spawn(command, *args, **kwargs)
+
 socket.socket = _deny_network
 socket.create_connection = _deny_network
 socket.getaddrinfo = _deny_network
@@ -59,7 +73,7 @@ subprocess.Popen = _deny_process_spawn
 subprocess.run = _deny_process_spawn
 subprocess.call = _deny_process_spawn
 subprocess.check_call = _deny_process_spawn
-subprocess.check_output = _deny_process_spawn
+subprocess.check_output = _fontconfig_check_output
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 
